@@ -44,13 +44,41 @@ BarChart.statics._baseLeft = function (x, i) {
   var numPoints = Object.keys(this.data).length;
   return (i / numPoints) * this.width;
 };
+BarChart.statics._baseHeight = function (y, i) {
+  var maxY = null, minY = null;
+    , keys = Object.keys(this.data)
+    , self = this
+    ;
+
+  keys.forEach(function (key) {
+    if (maxY === null) {
+      maxY = self.data[key];
+    } else {
+      maxY = Math.max(maxY, self.data[key]);
+    }
+    if (minY === null) {
+      minY = self.data[key];
+    } else {
+      minY = Math.min(minY, self.data[key]);
+    }
+  });
+
+  return (y - minY) / (maxY - minY) * this.height;
+};
 
 
 
 
 
+// ===== TESTS =====
 var bc = new BarChart();
 bc.withContainer('#graph1').withWidth(200).withHeight(50);
 bc.resizeContainer();
+
+
+
+
+
+
 
 
