@@ -11,6 +11,10 @@ function BarChart(opts) {
   this.data = opts.data;
   this._left = opts._left || BarChart.statics._baseLeft;
   this._height = opts._height || BarChart.statics._baseHeight;
+  this.scale = {};
+  this.scale.minY = opts.minY;
+  this.scale.maxY = opts.maxY;
+  this.useCustomScale = opts.useCustomScale;
 }
 
 // Setters for convenience
@@ -29,6 +33,13 @@ BarChart.prototype.withHeight = function (height) {
 };
 BarChart.prototype.withData = function (data) {
   this.data = data;
+  this.numBars = this.data.length;
+  this.minY = _.min(this.data);
+  this.maxY = _.max(this.data);
+  return this;
+};
+BarChart.prototype.withScale = function (scale) {
+  this.scale = scale;
   return this;
 };
 
@@ -38,30 +49,33 @@ BarChart.prototype.resizeContainer = function () {
   if (this.height) { this.$container.css('height', this.height + 'px'); }
 };
 
+BarChart.prototype.redraw = function () {
+  var self = this
+    , sel = d3.select('#graph1').selectAll('div')
+    ;
+
+  sel.data(this.data).enter().append('div')
+    .style('background-color', 'steelblue')
+    .style('width', '10px')
+    .style('top', function(d, i) { return (self.height - self._height(d, i)) + 'px'; })
+    .style('left', function(d, i) { return self._left(d, i) + 'px'; })
+    .style('height', function(d, i) { return self._height(d, i) + 'px'; })
+    .style('position', 'absolute')
+    ;
+};
+
 BarChart.statics = {};
 // _baseLeft and _baseHeight need to be added to the prototype of BarChart if no other plotting function is passed
 BarChart.statics._baseLeft = function (x, i) {
-  var numPoints = Object.keys(this.data).length;
-  return (i / numPoints) * this.width;
+  return (i / this.numBars) * this.width;
 };
 BarChart.statics._baseHeight = function (y, i) {
-  var maxY = null, minY = null;
-    , keys = Object.keys(this.data)
-    , self = this
+  var minY = this.minY
+    , maxY = this.maxY
     ;
 
-  keys.forEach(function (key) {
-    if (maxY === null) {
-      maxY = self.data[key];
-    } else {
-      maxY = Math.max(maxY, self.data[key]);
-    }
-    if (minY === null) {
-      minY = self.data[key];
-    } else {
-      minY = Math.min(minY, self.data[key]);
-    }
-  });
+  if (this.useCustomScale && this.scale.minY) { minY = this.scale.minY; }
+  if (this.useCustomScale && this.scale.maxY) { minY = this.scale.maxY; }
 
   return (y - minY) / (maxY - minY) * this.height;
 };
@@ -71,9 +85,12 @@ BarChart.statics._baseHeight = function (y, i) {
 
 
 // ===== TESTS =====
-var bc = new BarChart();
-bc.withContainer('#graph1').withWidth(200).withHeight(50);
+var bc = new BarChart({ useCustomScale: true });
+bc.withContainer('#graph1').withWidth(700).withHeight(500);
 bc.resizeContainer();
+bc.withData([1, 12, 4, 7, 5, 6, 7]).withScale({ minY: 0 }).redraw();
+
+
 
 
 
