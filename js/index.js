@@ -3,18 +3,26 @@
  *  * data: object x: y where x is a label and y a numerical value
  */
 function BarChart(opts) {
+  var self = this;
+
   opts = opts || {};
-  this.container = opts.container;
+
+  [ 'container'
+  , 'width'
+  , 'height'
+  , 'data'
+  , 'useCustomScale'
+  , 'maxBarWidth'
+  ].forEach(function (param) {
+    self[param] = opts[param];
+  });
+
   if (this.container) { this.$container = $(this.container); }
-  this.width = opts.width;
-  this.height = opts.height;
-  this.data = opts.data;
   this._left = opts._left || BarChart.statics._baseLeft;
   this._height = opts._height || BarChart.statics._baseHeight;
   this.scale = {};
   this.scale.minY = opts.minY;
   this.scale.maxY = opts.maxY;
-  this.useCustomScale = opts.useCustomScale;
 }
 
 // Setters for convenience
@@ -49,25 +57,54 @@ BarChart.prototype.resizeContainer = function () {
   if (this.height) { this.$container.css('height', this.height + 'px'); }
 };
 
-BarChart.prototype.redraw = function () {
-  var self = this
-    , sel = d3.select('#graph1').selectAll('div')
+BarChart.prototype.recalculateSizes = function () {
+  // Reset width and height if they changed or were never set
+  this.width = this.$container.width();
+  this.height = this.$container.height();
+
+  // Recalculate bar width and spacing
+  // Standard is bars are twice as large as spacing
+  // Then we check for a cap on bar width
+  var stdSpacing = this.width / (3 * this.numBars + 1)
+    , stdBarWidth = 2 * stdSpacing
+    , barWidth = this.maxBarWidth ? Math.min(stdBarWidth, this.maxBarWidth) : stdBarWidth
+    , spacing =  (this.width - (this.numBars * barWidth)) / (this.numBars + 1)
     ;
 
-  sel.data(this.data).enter().append('div')
+  this.barWidth = barWidth;
+  this.spacing = spacing;
+};
+
+BarChart.prototype.redraw = function () {
+  var self = this
+    ;
+
+  this.recalculateSizes();
+
+  // Prepare the new bars, put them all on the right with height 0
+  d3.select(this.container).selectAll('div').data(this.data).enter().append('div')
     .style('background-color', 'steelblue')
-    .style('width', '10px')
+    .style('width', this.barWidth + 'px')
+    .style('top', this.height + 'px')
+    .style('left', function(d, i) { return self._left(d, i) + 'px'; })
+    .style('height', '0px')
+    .style('position', 'absolute')
+    ;
+ 
+
+  d3.select(this.container).selectAll('div')//.data(this.data)
+    .transition().duration(1000)
+    .style('width', this.barWidth + 'px')
     .style('top', function(d, i) { return (self.height - self._height(d, i)) + 'px'; })
     .style('left', function(d, i) { return self._left(d, i) + 'px'; })
     .style('height', function(d, i) { return self._height(d, i) + 'px'; })
-    .style('position', 'absolute')
     ;
 };
 
 BarChart.statics = {};
 // _baseLeft and _baseHeight need to be added to the prototype of BarChart if no other plotting function is passed
 BarChart.statics._baseLeft = function (x, i) {
-  return (i / this.numBars) * this.width;
+  return this.spacing + (i * (this.spacing + this.barWidth));
 };
 BarChart.statics._baseHeight = function (y, i) {
   var minY = this.minY
@@ -85,12 +122,18 @@ BarChart.statics._baseHeight = function (y, i) {
 
 
 // ===== TESTS =====
-var bc = new BarChart({ useCustomScale: true });
-bc.withContainer('#graph1').withWidth(700).withHeight(500);
+var bc = new BarChart({ useCustomScale: true
+, maxBarWidth: 20
+});
+bc.withContainer('#graph1')//.withWidth(700).withHeight(500);
 bc.resizeContainer();
 bc.withData([1, 12, 4, 7, 5, 6, 7]).withScale({ minY: 0, maxY: 20 }).redraw();
 
 
+$("#test").on('click', function () {
+  bc.withData([4, 2, 17, 16, 0, 5, 10]);
+  bc.redraw();
+});
 
 
 
