@@ -74,8 +74,8 @@ BarChart.statics._baseHeight = function (y, i) {
     , maxY = this.maxY
     ;
 
-  if (this.useCustomScale && this.scale.minY) { minY = this.scale.minY; }
-  if (this.useCustomScale && this.scale.maxY) { minY = this.scale.maxY; }
+  if (this.useCustomScale && this.scale.minY !== undefined) { minY = this.scale.minY; }
+  if (this.useCustomScale && this.scale.maxY !== undefined) { maxY = this.scale.maxY; }
 
   return (y - minY) / (maxY - minY) * this.height;
 };
@@ -88,7 +88,7 @@ BarChart.statics._baseHeight = function (y, i) {
 var bc = new BarChart({ useCustomScale: true });
 bc.withContainer('#graph1').withWidth(700).withHeight(500);
 bc.resizeContainer();
-bc.withData([1, 12, 4, 7, 5, 6, 7]).withScale({ minY: 0 }).redraw();
+bc.withData([1, 12, 4, 7, 5, 6, 7]).withScale({ minY: 0, maxY: 20 }).redraw();
 
 
 
