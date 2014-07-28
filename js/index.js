@@ -23,6 +23,8 @@ function BarChart(opts) {
   this.scale = {};
   this.scale.minY = opts.minY;
   this.scale.maxY = opts.maxY;
+
+  this.transitionDuration = opts.transitionDuration || 500;
 }
 
 // Setters for convenience
@@ -89,7 +91,13 @@ BarChart.prototype.redraw = function () {
 
   this.recalculateSizes();
 
-  // Prepare the new bars, put them all on the right with height 0
+  d3.select(this.container).selectAll('div').data(this.data).exit()
+    .transition().duration(this.transitionDuration)
+    .style('height', '0px')
+    .style('top', this.height + 'px')
+    .remove()
+    ;
+
   d3.select(this.container).selectAll('div').data(this.data).enter().append('div')
     .style('background-color', 'steelblue')
     .style('width', this.barWidth + 'px')
@@ -99,25 +107,24 @@ BarChart.prototype.redraw = function () {
     .style('position', 'absolute')
     ;
  
-
   d3.select(this.container).selectAll('div').data(this.data)
-    .transition().duration(1000)
+    .transition().duration(this.transitionDuration).delay(this.transitionDuration)
     .style('width', this.barWidth + 'px')
-    .style('top', function(d, i) { return (self.height - self._height(d, i)) + 'px'; })
     .style('left', function(d, i) { return self._left(d, i) + 'px'; })
-    .style('height', function(d, i) { return self._height(d, i) + 'px'; })
     ;
 
-  d3.select(this.container).selectAll('div').data(this.data).exit()
-    .transition().duration(1000)
-    .style('height', '0px')
-    .style('top', this.height + 'px')
+  d3.select(this.container).selectAll('div').data(this.data)
+    .transition().duration(this.transitionDuration).delay(2 * this.transitionDuration)
+    .style('top', function(d, i) { return (self.height - self._height(d, i)) + 'px'; })
+    .style('height', function(d, i) { return self._height(d, i) + 'px'; })
     ;
 };
 
 BarChart.statics = {};
 // _baseLeft and _baseHeight need to be added to the prototype of BarChart if no other plotting function is passed
 BarChart.statics._baseLeft = function (x, i) {
+
+
   return this.spacing + (i * (this.spacing + this.barWidth));
 };
 BarChart.statics._baseHeight = function (y, i) {
@@ -130,6 +137,7 @@ BarChart.statics._baseHeight = function (y, i) {
 
   return (y.datum - minY) / (maxY - minY) * this.height;
 };
+BarChart.statics.getId = function (d)  { return d._id; };
 
 
 
