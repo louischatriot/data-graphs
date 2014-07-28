@@ -40,10 +40,18 @@ BarChart.prototype.withHeight = function (height) {
   return this;
 };
 BarChart.prototype.withData = function (data) {
-  this.data = data;
+  var count = 0, self = this;
+  this.data = [];
+
+  // Assumption: all items in the data array have the same format, just numbers or objects { datum, _id }
+  if (data[0] && !data[0]._id) {
+    data.forEach(function (d) { self.data.push({ datum: d, _id: count }); count += 1; });
+  } else {
+    this.data = data;
+  }
   this.numBars = this.data.length;
-  this.minY = _.min(this.data);
-  this.maxY = _.max(this.data);
+  this.minY = _.min(_.pluck(this.data, 'datum'));
+  this.maxY = _.max(_.pluck(this.data, 'datum'));
   return this;
 };
 BarChart.prototype.withScale = function (scale) {
@@ -92,12 +100,18 @@ BarChart.prototype.redraw = function () {
     ;
  
 
-  d3.select(this.container).selectAll('div')//.data(this.data)
+  d3.select(this.container).selectAll('div').data(this.data)
     .transition().duration(1000)
     .style('width', this.barWidth + 'px')
     .style('top', function(d, i) { return (self.height - self._height(d, i)) + 'px'; })
     .style('left', function(d, i) { return self._left(d, i) + 'px'; })
     .style('height', function(d, i) { return self._height(d, i) + 'px'; })
+    ;
+
+  d3.select(this.container).selectAll('div').data(this.data).exit()
+    .transition().duration(1000)
+    .style('height', '0px')
+    .style('top', this.height + 'px')
     ;
 };
 
@@ -114,7 +128,7 @@ BarChart.statics._baseHeight = function (y, i) {
   if (this.useCustomScale && this.scale.minY !== undefined) { minY = this.scale.minY; }
   if (this.useCustomScale && this.scale.maxY !== undefined) { maxY = this.scale.maxY; }
 
-  return (y - minY) / (maxY - minY) * this.height;
+  return (y.datum - minY) / (maxY - minY) * this.height;
 };
 
 
@@ -130,10 +144,21 @@ bc.resizeContainer();
 bc.withData([1, 12, 4, 7, 5, 6, 7]).withScale({ minY: 0, maxY: 20 }).redraw();
 
 
-$("#test").on('click', function () {
-  bc.withData([4, 2, 17, 16, 0, 5, 10]);
-  bc.redraw();
-});
+$("#test").on('click', (function () { var count = 0; return function () {
+  console.log("Count");
+
+  if (count === 0) {
+    bc.withData([4, 2, 17, 16, 0, 5, 10, 12, 18]);
+    bc.redraw();
+  }
+
+  if (count === 1) {
+    bc.withData([17, 16, 0, 5, 12, 18]);
+    bc.redraw();
+  }
+
+  count += 1;
+}})());
 
 
 
