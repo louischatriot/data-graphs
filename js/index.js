@@ -87,18 +87,23 @@ BarChart.prototype.recalculateSizes = function () {
 
 BarChart.prototype.redraw = function () {
   var self = this
+    , initialDelay = 0
     ;
 
   this.recalculateSizes();
 
-  d3.select(this.container).selectAll('div').data(this.data).exit()
+  if (!d3.select(this.container).selectAll('div').data(this.data, BarChart.statics.getId).exit().empty()) {
+    initialDelay = this.transitionDuration;
+  }
+
+  d3.select(this.container).selectAll('div').data(this.data, BarChart.statics.getId).exit()
     .transition().duration(this.transitionDuration)
     .style('height', '0px')
     .style('top', this.height + 'px')
     .remove()
     ;
 
-  d3.select(this.container).selectAll('div').data(this.data).enter().append('div')
+  d3.select(this.container).selectAll('div').data(this.data, BarChart.statics.getId).enter().append('div')
     .style('background-color', 'steelblue')
     .style('width', this.barWidth + 'px')
     .style('top', this.height + 'px')
@@ -107,14 +112,14 @@ BarChart.prototype.redraw = function () {
     .style('position', 'absolute')
     ;
  
-  d3.select(this.container).selectAll('div').data(this.data)
-    .transition().duration(this.transitionDuration).delay(this.transitionDuration)
+  d3.select(this.container).selectAll('div').data(this.data, BarChart.statics.getId)
+    .transition().duration(this.transitionDuration).delay(initialDelay)
     .style('width', this.barWidth + 'px')
     .style('left', function(d, i) { return self._left(d, i) + 'px'; })
     ;
 
-  d3.select(this.container).selectAll('div').data(this.data)
-    .transition().duration(this.transitionDuration).delay(2 * this.transitionDuration)
+  d3.select(this.container).selectAll('div').data(this.data, BarChart.statics.getId)
+    .transition().duration(this.transitionDuration).delay(initialDelay + this.transitionDuration)
     .style('top', function(d, i) { return (self.height - self._height(d, i)) + 'px'; })
     .style('height', function(d, i) { return self._height(d, i) + 'px'; })
     ;
@@ -145,23 +150,44 @@ BarChart.statics.getId = function (d)  { return d._id; };
 
 // ===== TESTS =====
 var bc = new BarChart({ useCustomScale: true
-, maxBarWidth: 20
+//, maxBarWidth: 20
 });
 bc.withContainer('#graph1')//.withWidth(700).withHeight(500);
 bc.resizeContainer();
-bc.withData([1, 12, 4, 7, 5, 6, 7]).withScale({ minY: 0, maxY: 20 }).redraw();
-
+bc.withData([ { datum: 1, _id: "A" }
+            , { datum: 12, _id: "B" }      
+            , { datum: 4, _id: "C" }      
+            , { datum: 7, _id: "D" }      
+            , { datum: 5, _id: "E" }      
+            , { datum: 6, _id: "F" }      
+            , { datum: 7, _id: "G" }      
+            ]).withScale({ minY: 0, maxY: 20 }).redraw();
 
 $("#test").on('click', (function () { var count = 0; return function () {
-  console.log("Count");
-
   if (count === 0) {
-    bc.withData([4, 2, 17, 16, 0, 5, 10, 12, 18]);
+    bc.withData([ { datum: 4, _id: "H" }
+                , { datum: 2, _id: "D" }      
+                , { datum: 17, _id: "C" }      
+                , { datum: 16, _id: "I" }      
+                , { datum: 0, _id: "E" }      
+                , { datum: 5, _id: "F" }      
+                , { datum: 10, _id: "B" }      
+                , { datum: 12, _id: "G" }      
+                , { datum: 18, _id: "A" }      
+                ]);
+
     bc.redraw();
   }
 
   if (count === 1) {
-    bc.withData([17, 16, 0, 5, 12, 18]);
+    bc.withData([ { datum: 4, _id: "B" }
+                , { datum: 2, _id: "D" }      
+                , { datum: 16, _id: "I" }      
+                , { datum: 0, _id: "E" }      
+                , { datum: 10, _id: "H" }      
+                , { datum: 18, _id: "A" }      
+                ]);
+
     bc.redraw();
   }
 
