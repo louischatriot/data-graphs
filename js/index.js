@@ -13,6 +13,7 @@ function BarChart(opts) {
   , 'data'
   , 'useCustomScale'
   , 'maxBarWidth'
+  , 'displayLabels'
   ].forEach(function (param) {
     self[param] = opts[param];
   });
@@ -54,10 +55,18 @@ BarChart.prototype.withData = function (data) {
   this.numBars = this.data.length;
   this.minY = _.min(_.pluck(this.data, 'datum'));
   this.maxY = _.max(_.pluck(this.data, 'datum'));
+
+  if (this.useCustomScale && this.scale.minY !== undefined) { this.minY = this.scale.minY; }
+  if (this.useCustomScale && this.scale.maxY !== undefined) { this.maxY = this.scale.maxY; }
+
   return this;
 };
 BarChart.prototype.withScale = function (scale) {
   this.scale = scale;
+
+  if (this.useCustomScale && this.scale.minY !== undefined) { this.minY = this.scale.minY; }
+  if (this.useCustomScale && this.scale.maxY !== undefined) { this.maxY = this.scale.maxY; }
+
   return this;
 };
 
@@ -85,6 +94,8 @@ BarChart.prototype.recalculateSizes = function () {
   this.spacing = spacing;
 };
 
+// Main draxing function that assumes we are in a clean state (same number of bars as data)
+// and which leaves a clean state
 BarChart.prototype.redraw = function () {
   var self = this
     , initialDelay = 0
@@ -108,30 +119,52 @@ BarChart.prototype.redraw = function () {
   // Create new bars
   selection = d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId).enter().append('div')
     .attr('class', 'bar')
-    .style('background-color', 'steelblue')
     .style('width', this.barWidth + 'px')
     .style('top', this.height + 'px')
     .style('left', function(d, i) { return self._left(d, i) + 'px'; })
     .style('height', '0px')
-    .style('position', 'absolute')
     ;
 
   // Create the labels for the new bars
-  selection.append('div').attr('class', 'label')
-           .text('bloup')
-           .style('width', '100%')
-           ;
+  if (this.displayLabels) {
+    selection.append('div').attr('class', 'label')
+             .text(function (d) { return d[self.displayLabels] || d._id; })
+             .style('width', '100%')
+             ;
+  }
  
+  // First transition: horizontal rearrangement
   d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId)
     .transition().duration(this.transitionDuration).delay(initialDelay)
     .style('width', this.barWidth + 'px')
     .style('left', function(d, i) { return self._left(d, i) + 'px'; })
     ;
 
+  // Second transition: vertical scaling
   d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId)
     .transition().duration(this.transitionDuration).delay(initialDelay + this.transitionDuration)
     .style('top', function(d, i) { return (self.height - self._height(d, i)) + 'px'; })
     .style('height', function(d, i) { return self._height(d, i) + 'px'; })
+    ;
+
+  this.redrawYAxis();
+};
+
+BarChart.prototype.redrawYAxis = function () {
+  var self = this
+    , ticks = d3.scale.linear().domain([this.minY, this.maxY]).ticks(5)
+    ;
+
+  d3.select(this.container).selectAll('div.ytick').data(ticks)
+    .exit().remove();
+
+  d3.select(this.container).selectAll('div.ytick').data(ticks)
+    .enter().append('div').attr('class', 'ytick');
+
+  d3.select(this.container).selectAll('div.ytick').data(ticks)
+    .text(function (d) { return d; })
+    .style('top', function(d, i) { return ((self.height - self._height(d, i)) - 6) + 'px'; })
+    .style('right', (this.width + 10) + 'px')
     ;
 };
 
@@ -143,17 +176,18 @@ BarChart.statics._baseLeft = function (x, i) {
   return this.spacing + (i * (this.spacing + this.barWidth));
 };
 BarChart.statics._baseHeight = function (y, i) {
-  var minY = this.minY
-    , maxY = this.maxY
-    ;
-
-  if (this.useCustomScale && this.scale.minY !== undefined) { minY = this.scale.minY; }
-  if (this.useCustomScale && this.scale.maxY !== undefined) { maxY = this.scale.maxY; }
-
-  return (y.datum - minY) / (maxY - minY) * this.height;
+  // This will work whether y is a number or an object with a datum property
+  return ((y.datum || y) - this.minY) / (this.maxY - this.minY) * this.height;
 };
 BarChart.statics.getId = function (d)  { return d._id; };
+//BarChart.statics.calculateStep = function (delta) {
+  //var n = Math.floor(Math.log(delta) / Math.log(10))
+    //, ticks = Math.floor(delta / Math.pow(n, 10)) + 2
+    //;
 
+  //delta = 
+  
+//};
 
 
 
@@ -161,6 +195,7 @@ BarChart.statics.getId = function (d)  { return d._id; };
 // ===== TESTS =====
 var bc = new BarChart({ useCustomScale: true
 //, maxBarWidth: 20
+, displayLabels: true
 });
 bc.withContainer('#graph1')//.withWidth(700).withHeight(500);
 bc.resizeContainer();
