@@ -88,22 +88,26 @@ BarChart.prototype.recalculateSizes = function () {
 BarChart.prototype.redraw = function () {
   var self = this
     , initialDelay = 0
+    , selection
     ;
 
   this.recalculateSizes();
 
-  if (!d3.select(this.container).selectAll('div').data(this.data, BarChart.statics.getId).exit().empty()) {
+  if (!d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId).exit().empty()) {
     initialDelay = this.transitionDuration;
   }
 
-  d3.select(this.container).selectAll('div').data(this.data, BarChart.statics.getId).exit()
+  // Transition old bars out
+  d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId).exit()
     .transition().duration(this.transitionDuration)
     .style('height', '0px')
     .style('top', this.height + 'px')
     .remove()
     ;
 
-  d3.select(this.container).selectAll('div').data(this.data, BarChart.statics.getId).enter().append('div')
+  // Create new bars
+  selection = d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId).enter().append('div')
+    .attr('class', 'bar')
     .style('background-color', 'steelblue')
     .style('width', this.barWidth + 'px')
     .style('top', this.height + 'px')
@@ -111,14 +115,20 @@ BarChart.prototype.redraw = function () {
     .style('height', '0px')
     .style('position', 'absolute')
     ;
+
+  // Create the labels for the new bars
+  selection.append('div').attr('class', 'label')
+           .text('bloup')
+           .style('width', '100%')
+           ;
  
-  d3.select(this.container).selectAll('div').data(this.data, BarChart.statics.getId)
+  d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId)
     .transition().duration(this.transitionDuration).delay(initialDelay)
     .style('width', this.barWidth + 'px')
     .style('left', function(d, i) { return self._left(d, i) + 'px'; })
     ;
 
-  d3.select(this.container).selectAll('div').data(this.data, BarChart.statics.getId)
+  d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId)
     .transition().duration(this.transitionDuration).delay(initialDelay + this.transitionDuration)
     .style('top', function(d, i) { return (self.height - self._height(d, i)) + 'px'; })
     .style('height', function(d, i) { return self._height(d, i) + 'px'; })
