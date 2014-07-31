@@ -26,8 +26,8 @@ function BarChart(opts) {
   this.$container.html('<div class="bars-container"></div>');
   this.barsContainer = this.container + ' .bars-container';
   this.$barsContainer = $(this.barsContainer);
-  this.$barsContainer.css('left', '50px');
-  this.$barsContainer.css('right', '0px');
+  this.$barsContainer.css('left', '40px');
+  this.$barsContainer.css('right', '100px');
   this.$barsContainer.css('top', '0px');
   this.$barsContainer.css('bottom', '30px');
 
@@ -70,6 +70,23 @@ BarChart.prototype.withScale = function (scale) {
 
   if (this.useCustomScale && this.scale.minY !== undefined) { this.minY = this.scale.minY; }
   if (this.useCustomScale && this.scale.maxY !== undefined) { this.maxY = this.scale.maxY; }
+
+  return this;
+};
+BarChart.prototype.withYAxisTitle = function (title, _height) {
+  var height = _height || 70;
+
+  this.$barsContainer.css('top', height + 'px');
+
+  if (!this.$yAxisTitle) {
+    this.$container.append('<div class="y-axis-title">' + title + '</div>');
+    this.$yAxisTitle = $(this.container + ' y-axis-title');
+  }
+
+  this.$yAxisTitle.css('position', 'absolute');
+  this.$yAxisTitle.css('width', '200px');
+  this.$yAxisTitle.css('left', '0px');
+  this.$yAxisTitle.css('top', '0px');
 
   return this;
 };
@@ -171,13 +188,13 @@ BarChart.prototype.redrawYAxis = function () {
     , ticks = d3.scale.linear().domain([this.minY, this.maxY]).ticks(5)
     ;
 
-  d3.select(this.container).selectAll('div.ytick').data(ticks)
+  d3.select(this.barsContainer).selectAll('div.ytick').data(ticks)
     .exit().remove();
 
-  d3.select(this.container).selectAll('div.ytick').data(ticks)
+  d3.select(this.barsContainer).selectAll('div.ytick').data(ticks)
     .enter().append('div').attr('class', 'ytick');
 
-  d3.select(this.container).selectAll('div.ytick').data(ticks)
+  d3.select(this.barsContainer).selectAll('div.ytick').data(ticks)
     .text(function (d) { return d; })
     .style('top', function(d, i) { return ((self.innerHeight - self._height(d, i)) - 6) + 'px'; })
     .style('right', (this.innerWidth + 10) + 'px')
@@ -262,7 +279,7 @@ bc.withData([ { datum: 5, _id: "A" }
             , { datum: 1, _id: "E" }      
             , { datum: 6, _id: "F" }      
             , { datum: 7, _id: "G" }      
-            ])/*.withScale({ minY: 0, maxY: 20 })*/.redraw();
+            ])/*.withScale({ minY: 0, maxY: 20 })*/.withYAxisTitle('Distance driven (km)', 40).redraw();
 
 $("#test").on('click', (function () { var count = 0; return function () {
   if (count === 0) {

@@ -4,11 +4,10 @@ body {
 }
 
 #graph1 {
-  width: 500px;
-  height: 400px;
+  width: 900px;
+  height: 600px;
   position: relative;
-
-  border: 2px red solid;
+  /*border: 2px red solid;*/
 }
 
 .bars-container {
@@ -20,7 +19,7 @@ body {
 .label {
   text-align: center;
   position: absolute;
-  bottom: -30px;
+  bottom: -22px;
 }
 
 .ytick {
