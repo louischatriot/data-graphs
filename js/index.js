@@ -10,6 +10,8 @@ function BarChart(opts) {
   [ 'container'
   , 'width'
   , 'height'
+  , 'innerWidth'
+  , 'innerHeight'
   , 'data'
   , 'useCustomScale'
   , 'maxBarWidth'
@@ -19,9 +21,16 @@ function BarChart(opts) {
     self[param] = opts[param];
   });
 
-  if (this.container) { this.$container = $(this.container); }
-  this._left = opts._left || BarChart.statics._baseLeft;
-  this._height = opts._height || BarChart.statics._baseHeight;
+  // Creating the two containers
+  this.$container = $(this.container);
+  this.$container.html('<div class="bars-container"></div>');
+  this.barsContainer = this.container + ' .bars-container';
+  this.$barsContainer = $(this.barsContainer);
+  this.$barsContainer.css('left', '50px');
+  this.$barsContainer.css('right', '0px');
+  this.$barsContainer.css('top', '0px');
+  this.$barsContainer.css('bottom', '30px');
+
   this.scale = {};
   this.scale.minY = opts.minY;
   this.scale.maxY = opts.maxY;
@@ -29,12 +38,6 @@ function BarChart(opts) {
   this.transitionDuration = opts.transitionDuration || 500;
 }
 
-// Setters for convenience
-BarChart.prototype.withContainer = function (container) {
-  this.container = container;
-  if (this.container) { this.$container = $(this.container); }
-  return this;
-};
 BarChart.prototype.withWidth = function (width) {
   this.width = width;
   return this;
@@ -79,16 +82,16 @@ BarChart.prototype.resizeContainer = function () {
 
 BarChart.prototype.recalculateSizes = function () {
   // Reset width and height if they changed or were never set
-  this.width = this.$container.width();
-  this.height = this.$container.height();
+  this.innerWidth = this.$barsContainer.width();
+  this.innerHeight = this.$barsContainer.height();
 
   // Recalculate bar width and spacing
   // Standard is bars are twice as large as spacing
   // Then we check for a cap on bar width
-  var stdSpacing = this.width / (3 * this.numBars + 1)
+  var stdSpacing = this.innerWidth / (3 * this.numBars + 1)
     , stdBarWidth = 2 * stdSpacing
     , barWidth = this.maxBarWidth ? Math.min(stdBarWidth, this.maxBarWidth) : stdBarWidth
-    , spacing =  (this.width - (this.numBars * barWidth)) / (this.numBars + 1)
+    , spacing =  (this.innerWidth - (this.numBars * barWidth)) / (this.numBars + 1)
     ;
 
   this.barWidth = barWidth;
@@ -110,23 +113,23 @@ BarChart.prototype.redraw = function () {
     $(this.container + ' div.bar').off('mouseleave', null, removeToolTip);
   }
 
-  if (!d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId).exit().empty()) {
+  if (!d3.select(this.barsContainer).selectAll('div.bar').data(this.data, BarChart.statics.getId).exit().empty()) {
     initialDelay = this.transitionDuration;
   }
 
   // Transition old bars out
-  d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId).exit()
+  d3.select(this.barsContainer).selectAll('div.bar').data(this.data, BarChart.statics.getId).exit()
     .transition().duration(this.transitionDuration)
     .style('height', '0px')
-    .style('top', this.height + 'px')
+    .style('top', this.innerHeight + 'px')
     .remove()
     ;
 
   // Create new bars
-  selection = d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId).enter().append('div')
+  selection = d3.select(this.barsContainer).selectAll('div.bar').data(this.data, BarChart.statics.getId).enter().append('div')
     .attr('class', 'bar')
     .style('width', this.barWidth + 'px')
-    .style('top', this.height + 'px')
+    .style('top', this.innerHeight + 'px')
     .style('left', function(d, i) { return self._left(d, i) + 'px'; })
     .style('height', '0px')
     ;
@@ -141,7 +144,7 @@ BarChart.prototype.redraw = function () {
  
   // First transition: horizontal rearrangement
   // Also put data for tooltip
-  d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId)
+  d3.select(this.barsContainer).selectAll('div.bar').data(this.data, BarChart.statics.getId)
     .transition().duration(this.transitionDuration).delay(initialDelay)
     .style('width', this.barWidth + 'px')
     .style('left', function(d, i) { return self._left(d, i) + 'px'; })
@@ -149,9 +152,9 @@ BarChart.prototype.redraw = function () {
     ;
 
   // Second transition: vertical scaling
-  d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId)
+  d3.select(this.barsContainer).selectAll('div.bar').data(this.data, BarChart.statics.getId)
     .transition().duration(this.transitionDuration).delay(initialDelay + this.transitionDuration)
-    .style('top', function(d, i) { return (self.height - self._height(d, i)) + 'px'; })
+    .style('top', function(d, i) { return (self.innerHeight - self._height(d, i)) + 'px'; })
     .style('height', function(d, i) { return self._height(d, i) + 'px'; })
     ;
 
@@ -176,32 +179,37 @@ BarChart.prototype.redrawYAxis = function () {
 
   d3.select(this.container).selectAll('div.ytick').data(ticks)
     .text(function (d) { return d; })
-    .style('top', function(d, i) { return ((self.height - self._height(d, i)) - 6) + 'px'; })
-    .style('right', (this.width + 10) + 'px')
+    .style('top', function(d, i) { return ((self.innerHeight - self._height(d, i)) - 6) + 'px'; })
+    .style('right', (this.innerWidth + 10) + 'px')
     ;
 };
 
-BarChart.statics = {};
-// _baseLeft and _baseHeight need to be added to the prototype of BarChart if no other plotting function is passed
-BarChart.statics._baseLeft = function (x, i) {
-
-
+// Position functions, with or without the 'px' suffix
+BarChart.prototype._left = function (x, i) {
   return this.spacing + (i * (this.spacing + this.barWidth));
 };
-BarChart.statics._baseHeight = function (y, i) {
-  // This will work whether y is a number or an object with a datum property
-  return ((y.datum || y) - this.minY) / (this.maxY - this.minY) * this.height;
+BarChart.prototype._width = function (x, i) {
+  return this.barWidth;
 };
+BarChart.prototype._top = function (y, i) {
+  return this.innerHeight - this._height(y, i);
+};
+BarChart.prototype._height = function (y, i) {
+  // This will work whether y is a number or an object with a datum property
+  return ((y.datum || y) - this.minY) / (this.maxY - this.minY) * this.innerHeight;
+};
+// Px counterparts
+['left', 'width', 'top', 'height'].forEach(function (key) {
+  BarChart.prototype[key + '_px'] = function (d, i) { return this['_' + key](d, i) + 'px'; };
+});
+
+
+BarChart.statics = {};
+// _baseLeft and _baseHeight need to be added to the prototype of BarChart if no other plotting function is passed
 BarChart.statics.getId = function (d)  { return d._id; };
-//BarChart.statics.calculateStep = function (delta) {
-  //var n = Math.floor(Math.log(delta) / Math.log(10))
-    //, ticks = Math.floor(delta / Math.pow(n, 10)) + 2
-    //;
 
-  //delta = 
-  
-//};
 
+// Tooltip management
 function showToolTip (event) {
   var $target = $(event.target)
     , id = uid(12)
@@ -215,10 +223,11 @@ function showToolTip (event) {
 
   $target.data('tooltip-id', id);
 
-  tooltipHtml = '<div class="tooltip" id="' + id + '" style="position: fixed; left: ' + event.pageX + 'px; top: ' + event.pageY + 'px;">VVVXXV' + $target.data('description') + '</div>';
-  $target.append(tooltipHtml);
+  if ($target.data('description')) {
+    tooltipHtml = '<div class="tooltip" id="' + id + '" style="position: fixed; left: ' + (event.pageX - 28) + 'px; top: ' + (event.pageY - 56) + 'px;">' + $target.data('description') + '</div>';
+    $target.append(tooltipHtml);
+  }
 }
-
 function removeToolTip (event) {
   var $target = $(event.target)
     , $parent, $tooltip
@@ -239,18 +248,18 @@ function removeToolTip (event) {
 
 
 // ===== TESTS =====
-var bc = new BarChart({ useCustomScale: true
+var bc = new BarChart({ container: "#graph1"
+, useCustomScale: true
 //, maxBarWidth: 20
 , displayLabels: true
 , showTooltips: true
 });
-bc.withContainer('#graph1')//.withWidth(700).withHeight(500);
 bc.resizeContainer();
-bc.withData([ { datum: 1, _id: "A" }
+bc.withData([ { datum: 5, _id: "A" }
             , { datum: 12, _id: "B" }      
-            , { datum: 4, _id: "C" }      
+            , { datum: 4, _id: "C", description: "Some interesting text" }      
             , { datum: 7, _id: "D" }      
-            , { datum: 5, _id: "E" }      
+            , { datum: 1, _id: "E" }      
             , { datum: 6, _id: "F" }      
             , { datum: 7, _id: "G" }      
             ])/*.withScale({ minY: 0, maxY: 20 })*/.redraw();
