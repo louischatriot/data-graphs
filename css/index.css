@@ -20,5 +20,16 @@
 
 .bar {
   position: absolute;
-  background-color: darkred;
+  background-color: steelblue;
+}
+
+.tooltip {
+  width: 100px;
+  background-color: white;
+  border: 2px solid midnightblue;
+  border-radius: 6px;
+  text-align: center;
+  padding: 6px;
+  opacity: 0.8;
+  z-index: 1000;
 }

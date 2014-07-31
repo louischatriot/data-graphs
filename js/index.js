@@ -14,6 +14,7 @@ function BarChart(opts) {
   , 'useCustomScale'
   , 'maxBarWidth'
   , 'displayLabels'
+  , 'showTooltips'
   ].forEach(function (param) {
     self[param] = opts[param];
   });
@@ -104,6 +105,11 @@ BarChart.prototype.redraw = function () {
 
   this.recalculateSizes();
 
+  if (this.showTooltips) {
+    $(this.container + ' div.bar').off('mouseover', null, showToolTip);
+    $(this.container + ' div.bar').off('mouseleave', null, removeToolTip);
+  }
+
   if (!d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId).exit().empty()) {
     initialDelay = this.transitionDuration;
   }
@@ -134,10 +140,12 @@ BarChart.prototype.redraw = function () {
   }
  
   // First transition: horizontal rearrangement
+  // Also put data for tooltip
   d3.select(this.container).selectAll('div.bar').data(this.data, BarChart.statics.getId)
     .transition().duration(this.transitionDuration).delay(initialDelay)
     .style('width', this.barWidth + 'px')
     .style('left', function(d, i) { return self._left(d, i) + 'px'; })
+    .attr('data-description', function (d, i) { return d.description || ''; })
     ;
 
   // Second transition: vertical scaling
@@ -148,6 +156,11 @@ BarChart.prototype.redraw = function () {
     ;
 
   this.redrawYAxis();
+
+  if (this.showTooltips) {
+    $(this.container + ' div.bar').on('mouseover', showToolTip);
+    $(this.container + ' div.bar').on('mouseleave', removeToolTip);
+  }
 };
 
 BarChart.prototype.redrawYAxis = function () {
@@ -189,6 +202,39 @@ BarChart.statics.getId = function (d)  { return d._id; };
   
 //};
 
+function showToolTip (event) {
+  var $target = $(event.target)
+    , id = uid(12)
+    , tooltipHtml
+    ;
+
+  // Tooltip already shown
+  if ($target.data('tooltip-id')) { return; }
+  // Not on a bar, only on a label
+  if (!$target.hasClass('bar')) { return; }
+
+  $target.data('tooltip-id', id);
+
+  tooltipHtml = '<div class="tooltip" id="' + id + '" style="position: fixed; left: ' + event.pageX + 'px; top: ' + event.pageY + 'px;">VVVXXV' + $target.data('description') + '</div>';
+  $target.append(tooltipHtml);
+}
+
+function removeToolTip (event) {
+  var $target = $(event.target)
+    , $parent, $tooltip
+    ;
+
+  if ($target.hasClass('bar')) {
+    $parent = $target;
+  } else {
+    $parent = $target.parent();
+  }
+
+  $tooltip = $('#' + $parent.data('tooltip-id'));
+
+  $tooltip.remove();
+  $parent.data('tooltip-id', '');
+}
 
 
 
@@ -196,6 +242,7 @@ BarChart.statics.getId = function (d)  { return d._id; };
 var bc = new BarChart({ useCustomScale: true
 //, maxBarWidth: 20
 , displayLabels: true
+, showTooltips: true
 });
 bc.withContainer('#graph1')//.withWidth(700).withHeight(500);
 bc.resizeContainer();
@@ -206,13 +253,13 @@ bc.withData([ { datum: 1, _id: "A" }
             , { datum: 5, _id: "E" }      
             , { datum: 6, _id: "F" }      
             , { datum: 7, _id: "G" }      
-            ]).withScale({ minY: 0, maxY: 20 }).redraw();
+            ])/*.withScale({ minY: 0, maxY: 20 })*/.redraw();
 
 $("#test").on('click', (function () { var count = 0; return function () {
   if (count === 0) {
     bc.withData([ { datum: 4, _id: "H" }
                 , { datum: 2, _id: "D" }      
-                , { datum: 17, _id: "C" }      
+                , { datum: 17, _id: "C" }
                 , { datum: 16, _id: "I" }      
                 , { datum: 0, _id: "E" }      
                 , { datum: 5, _id: "F" }      
