@@ -27,7 +27,7 @@ function BarChart(opts) {
   this.barsContainer = this.container + ' .bars-container';
   this.$barsContainer = $(this.barsContainer);
   this.$barsContainer.css('left', '40px');
-  this.$barsContainer.css('right', '100px');
+  this.$barsContainer.css('right', '0px');
   this.$barsContainer.css('top', '0px');
   this.$barsContainer.css('bottom', '30px');
 
@@ -90,6 +90,24 @@ BarChart.prototype.withYAxisTitle = function (title, _width) {
   this.$yAxisTitle.css('top', '0px');
 
   this.$barsContainer.css('top', (this.$yAxisTitle.height() + 15) + 'px');
+
+  return this;
+};
+BarChart.prototype.withXAxisTitle = function (title, _width) {
+  var width = _width || 150;
+  if (width > this.$container.width()) { width = this.$container.width() / 4; }
+
+  if (!this.$xAxisTitle) {
+    this.$container.append('<div class="x-axis-title">' + title + '</div>');
+    this.$xAxisTitle = $(this.container + ' .x-axis-title');
+  }
+
+  this.$xAxisTitle.css('position', 'absolute');
+  this.$xAxisTitle.css('width', width + 'px');
+  this.$xAxisTitle.css('right', '0px');
+  this.$xAxisTitle.css('bottom', (parseInt(this.$barsContainer.css('bottom'), 10) - 5) + 'px');
+
+  this.$barsContainer.css('right', (this.$xAxisTitle.width() + 15) + 'px');
 
   return this;
 };
@@ -277,38 +295,38 @@ var bc = new BarChart({ container: "#graph1"
 , showTooltips: true
 });
 bc.resizeContainer();
-bc.withData([ { datum: 5, _id: "A" }
-            , { datum: 12, _id: "B" }      
-            , { datum: 4, _id: "C", description: "Some interesting text" }      
-            , { datum: 7, _id: "D" }      
-            , { datum: 1, _id: "E" }      
-            , { datum: 6, _id: "F" }      
-            , { datum: 7, _id: "G" }      
+bc.withData([ { datum: 5, _id: "AB 103 XD" }
+            , { datum: 12, _id: "BB 103 XD" }
+            , { datum: 4, _id: "CB 103 XD", description: "Some interesting text" }      
+            , { datum: 7, _id: "DB 103 XD" }
+            , { datum: 1, _id: "EB 103 XD" }
+            , { datum: 6, _id: "FB 103 XD" }
+            , { datum: 7, _id: "GB 103 XD" }
             ])/*.withScale({ minY: 0, maxY: 20 })*/.withYAxisTitle('Distance driven (km)').redraw();
 
 $("#test").on('click', (function () { var count = 0; return function () {
   if (count === 0) {
-    bc.withData([ { datum: 4, _id: "H" }
-                , { datum: 2, _id: "D" }      
-                , { datum: 17, _id: "C" }
-                , { datum: 16, _id: "I" }      
-                , { datum: 0, _id: "E" }      
-                , { datum: 5, _id: "F" }      
-                , { datum: 10, _id: "B" }      
-                , { datum: 12, _id: "G" }      
-                , { datum: 18, _id: "A" }      
+    bc.withData([ { datum: 4, _id: "HB 103 XD" }
+                , { datum: 2, _id: "DB 103 XD" }
+                , { datum: 17, _id: "CB 103 XD" }
+                , { datum: 16, _id: "IB 103 XD" }
+                , { datum: 0, _id: "EB 103 XD" }
+                , { datum: 5, _id: "FB 103 XD" }
+                , { datum: 10, _id: "BB 103 XD" }
+                , { datum: 12, _id: "GB 103 XD" }
+                , { datum: 18, _id: "AB 103 XD" }
                 ]);
 
     bc.redraw();
   }
 
   if (count === 1) {
-    bc.withData([ { datum: 4, _id: "B" }
-                , { datum: 2, _id: "D" }      
-                , { datum: 16, _id: "I" }      
-                , { datum: 0, _id: "E" }      
-                , { datum: 10, _id: "H" }      
-                , { datum: 18, _id: "A" }      
+    bc.withData([ { datum: 4, _id: "BB 103 XD" }
+                , { datum: 2, _id: "DB 103 XD" }
+                , { datum: 16, _id: "IB 103 XD" }
+                , { datum: 0, _id: "EB 103 XD" }
+                , { datum: 10, _id: "HB 103 XD" }
+                , { datum: 18, _id: "AB 103 XD" }
                 ]);
 
     bc.redraw();
