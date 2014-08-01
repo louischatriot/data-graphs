@@ -93,9 +93,8 @@ BarChart.prototype.withYAxisTitle = function (title, _width) {
 
   return this;
 };
-BarChart.prototype.withXAxisTitle = function (title, _width) {
-  var width = _width || 150;
-  if (width > this.$container.width()) { width = this.$container.width() / 4; }
+BarChart.prototype.withXAxisTitle = function (title, width) {
+  this.updateRightPanelWidth(width);
 
   if (!this.$xAxisTitle) {
     this.$container.append('<div class="x-axis-title">' + title + '</div>');
@@ -103,11 +102,11 @@ BarChart.prototype.withXAxisTitle = function (title, _width) {
   }
 
   this.$xAxisTitle.css('position', 'absolute');
-  this.$xAxisTitle.css('width', width + 'px');
+  this.$xAxisTitle.css('width', this.rightPanelWidth + 'px');
   this.$xAxisTitle.css('right', '0px');
   this.$xAxisTitle.css('bottom', (parseInt(this.$barsContainer.css('bottom'), 10) - 5) + 'px');
 
-  this.$barsContainer.css('right', (this.$xAxisTitle.width() + 15) + 'px');
+  this.$barsContainer.css('right', (this.rightPanelWidth + 15) + 'px');
 
   return this;
 };
@@ -235,6 +234,48 @@ BarChart.prototype.redrawYAxis = function () {
     ;
 };
 
+BarChart.prototype.updateRightPanelWidth = function (_width) {
+  var width = _width || 150;
+  if (this.rightPanelWidth) { width = Math.max(width, this.rightPanelWidth); }
+  if (width > this.$container.width()) { width = this.$container.width() / 4; }
+  this.rightPanelWidth = width;
+};
+
+// For now only possible to add one line
+BarChart.prototype.updateHorizontalLine = function (y, text, width) {
+  var labelTop;
+
+  this.updateRightPanelWidth();
+
+  if (!this.$horizontalLine) {
+    this.$barsContainer.append('<div class="horizontal-line"></div>');
+    this.$horizontalLine = $(this.barsContainer + ' .horizontal-line');
+  }
+
+  this.$horizontalLine.css('position', 'absolute');
+  this.$horizontalLine.css('height', '2px');
+  this.$horizontalLine.css('background-color', 'darkred');
+  this.$horizontalLine.css('right', '0px');
+  this.$horizontalLine.css('left', '0px');
+  this.$horizontalLine.css('top', this._top(y) + 'px');
+ 
+  if (!this.$horizontalLineLabel) {
+    this.$container.append('<div class="horizontal-line-label">' + text + '</div>');
+    this.$horizontalLineLabel = $(this.container + ' .horizontal-line-label');
+  }
+
+  this.$horizontalLineLabel.css('position', 'absolute');
+  this.$horizontalLineLabel.css('color', 'darkred');
+  this.$horizontalLineLabel.css('width', this.rightPanelWidth + 'px');
+  this.$horizontalLineLabel.css('right', '0px');
+
+  //var maxTop = this.$container.height()
+
+  this.$horizontalLineLabel.css('top', this._top(y) + 'px');
+
+  return this;
+};
+
 // Position functions, with or without the 'px' suffix
 BarChart.prototype._left = function (x, i) {
   return this.spacing + (i * (this.spacing + this.barWidth));
@@ -314,6 +355,8 @@ bc.withData([ { datum: 5, _id: "AB 103 XD" }
             , { datum: 6, _id: "FB 103 XD" }
             , { datum: 7, _id: "GB 103 XD" }
             ])/*.withScale({ minY: 0, maxY: 20 })*/.withYAxisTitle('Distance driven (km)').useVerticalLabels().redraw();
+
+bc.updateHorizontalLine(7, 'average');
 
 $("#test").on('click', (function () { var count = 0; return function () {
   if (count === 0) {

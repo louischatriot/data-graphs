@@ -7,7 +7,7 @@ body {
   width: 1200px;
   height: 600px;
   position: relative;
-  /*border: 2px red solid;*/
+  border: 2px red solid;
 }
 
 .bars-container {
