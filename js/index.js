@@ -40,10 +40,12 @@ function BarChart(opts) {
 
 BarChart.prototype.withWidth = function (width) {
   this.width = width;
+  this.resizeContainer();
   return this;
 };
 BarChart.prototype.withHeight = function (height) {
   this.height = height;
+  this.resizeContainer();
   return this;
 };
 BarChart.prototype.withData = function (data) {
@@ -73,20 +75,21 @@ BarChart.prototype.withScale = function (scale) {
 
   return this;
 };
-BarChart.prototype.withYAxisTitle = function (title, _height) {
-  var height = _height || 70;
-
-  this.$barsContainer.css('top', height + 'px');
+BarChart.prototype.withYAxisTitle = function (title, _width) {
+  var width = _width || 200;
+  if (width > this.$container.width()) { width = this.$container.width(); }
 
   if (!this.$yAxisTitle) {
     this.$container.append('<div class="y-axis-title">' + title + '</div>');
-    this.$yAxisTitle = $(this.container + ' y-axis-title');
+    this.$yAxisTitle = $(this.container + ' .y-axis-title');
   }
 
   this.$yAxisTitle.css('position', 'absolute');
-  this.$yAxisTitle.css('width', '200px');
+  this.$yAxisTitle.css('width', width + 'px');
   this.$yAxisTitle.css('left', '0px');
   this.$yAxisTitle.css('top', '0px');
+
+  this.$barsContainer.css('top', (this.$yAxisTitle.height() + 15) + 'px');
 
   return this;
 };
@@ -95,6 +98,8 @@ BarChart.prototype.resizeContainer = function () {
   if (!this.$container) { return; }
   if (this.width) { this.$container.css('width', this.width + 'px'); }
   if (this.height) { this.$container.css('height', this.height + 'px'); }
+
+  return this;
 };
 
 BarChart.prototype.recalculateSizes = function () {
@@ -279,7 +284,7 @@ bc.withData([ { datum: 5, _id: "A" }
             , { datum: 1, _id: "E" }      
             , { datum: 6, _id: "F" }      
             , { datum: 7, _id: "G" }      
-            ])/*.withScale({ minY: 0, maxY: 20 })*/.withYAxisTitle('Distance driven (km)', 40).redraw();
+            ])/*.withScale({ minY: 0, maxY: 20 })*/.withYAxisTitle('Distance driven (km)').redraw();
 
 $("#test").on('click', (function () { var count = 0; return function () {
   if (count === 0) {
