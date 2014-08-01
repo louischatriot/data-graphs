@@ -111,6 +111,10 @@ BarChart.prototype.withXAxisTitle = function (title, _width) {
 
   return this;
 };
+BarChart.prototype.useVerticalLabels = function () {
+  this.useVerticalLabels = true;
+  return this;
+};
 
 BarChart.prototype.resizeContainer = function () {
   if (!this.$container) { return; }
@@ -180,6 +184,13 @@ BarChart.prototype.redraw = function () {
              .text(function (d) { return d[self.displayLabels] || d._id; })
              .style('width', '100%')
              ;
+
+    if (this.useVerticalLabels) {
+      d3.select(this.barsContainer).selectAll('div.label')
+        .style('transform', 'rotate(90deg) translate(50%)')
+        .style('text-align', 'left')
+        ;
+    }
   }
  
   // First transition: horizontal rearrangement
@@ -302,7 +313,7 @@ bc.withData([ { datum: 5, _id: "AB 103 XD" }
             , { datum: 1, _id: "EB 103 XD" }
             , { datum: 6, _id: "FB 103 XD" }
             , { datum: 7, _id: "GB 103 XD" }
-            ])/*.withScale({ minY: 0, maxY: 20 })*/.withYAxisTitle('Distance driven (km)').redraw();
+            ])/*.withScale({ minY: 0, maxY: 20 })*/.withYAxisTitle('Distance driven (km)').useVerticalLabels().redraw();
 
 $("#test").on('click', (function () { var count = 0; return function () {
   if (count === 0) {
