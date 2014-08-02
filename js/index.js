@@ -336,19 +336,16 @@ BarChart.statics.getId = function (d)  { return d._id; };
 // Tooltip management
 function showToolTip (event) {
   var $target = $(event.target)
-    , id = uid(12)
     , tooltipHtml
     ;
 
   // Tooltip already shown
-  if ($target.data('tooltip-id')) { return; }
+  if ($target.find('div.tooltip').length > 0) { return; }
   // Not on a bar, only on a label
   if (!$target.hasClass('bar')) { return; }
 
-  $target.data('tooltip-id', id);
-
   if ($target.data('description')) {
-    tooltipHtml = '<div class="tooltip" id="' + id + '" style="position: fixed; left: ' + (event.pageX - 28) + 'px; top: ' + (event.pageY - 56) + 'px;">' + $target.data('description') + '</div>';
+    tooltipHtml = '<div class="tooltip" style="position: fixed; left: ' + (event.pageX - 28) + 'px; top: ' + (event.pageY - 56) + 'px;">' + $target.data('description') + '</div>';
     $target.append(tooltipHtml);
   }
 }
@@ -363,10 +360,9 @@ function removeToolTip (event) {
     $parent = $target.parent();
   }
 
-  $tooltip = $('#' + $parent.data('tooltip-id'));
+  $tooltip = $parent.find('div.tooltip');
 
   $tooltip.remove();
-  $parent.data('tooltip-id', '');
 }
 
 
@@ -382,7 +378,7 @@ bc.resizeContainer();
 bc.withData([ { datum: 5, _id: "AB 103 XD" }
             , { datum: 12, _id: "BB 103 XD" }
             , { datum: 4, _id: "CB 103 XD", description: "Some interesting text" }      
-            , { datum: 7, _id: "DB 103 XD" }
+            , { datum: 7, _id: "DB 103 XD", description: "Some other text" }
             , { datum: 1, _id: "EB 103 XD" }
             , { datum: 6, _id: "FB 103 XD" }
             , { datum: 7, _id: "GB 103 XD" }
