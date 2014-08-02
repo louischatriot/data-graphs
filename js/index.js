@@ -207,6 +207,7 @@ BarChart.prototype.redraw = function () {
     ;
 
   this.redrawYAxis();
+  this.updateHorizontalLineHeight();
 
   if (this.showTooltips) {
     $(this.container + ' div.bar').on('mouseover', showToolTip);
@@ -250,40 +251,60 @@ BarChart.prototype.updateRightPanelWidth = function (_width) {
 
 // For now only possible to add one line
 BarChart.prototype.horizontalLine = function (y, text, width) {
-  var labelTop;
+  var self = this;
 
   this.updateRightPanelWidth();
 
+  // Create the line and its label
   if (!this.$horizontalLine) {
     this.$barsContainer.append('<div class="horizontal-line"></div>');
     this.$horizontalLine = $(this.barsContainer + ' .horizontal-line');
+    this.$horizontalLine.css('position', 'absolute');
+    this.$horizontalLine.css('height', '2px');
+    this.$horizontalLine.css('background-color', 'darkred');
+    this.$horizontalLine.css('right', '0px');
+    this.$horizontalLine.css('left', '0px');
   }
-
-  this.$horizontalLine.css('position', 'absolute');
-  this.$horizontalLine.css('height', '2px');
-  this.$horizontalLine.css('background-color', 'darkred');
-  this.$horizontalLine.css('right', '0px');
-  this.$horizontalLine.css('left', '0px');
-  this.$horizontalLine.css('top', this._top(y) + 'px');
- 
   if (!this.$horizontalLineLabel) {
     this.$container.append('<div class="horizontal-line-label">' + text + '</div>');
     this.$horizontalLineLabel = $(this.container + ' .horizontal-line-label');
+    this.$horizontalLineLabel.css('position', 'absolute');
+    this.$horizontalLineLabel.css('color', 'darkred');
+    this.$horizontalLineLabel.css('width', this.rightPanelWidth + 'px');
+    this.$horizontalLineLabel.css('right', '0px');
   }
 
-  this.$horizontalLineLabel.css('position', 'absolute');
-  this.$horizontalLineLabel.css('color', 'darkred');
-  this.$horizontalLineLabel.css('width', this.rightPanelWidth + 'px');
-  this.$horizontalLineLabel.css('right', '0px');
-
-  // Prevent horizontal line label from overlapping x axis label
-  var labelTop = this._top(y) + parseInt(this.$barsContainer.css('top'), 10) - 10;
-  if (this.$xAxisTitle) {
-    labelTop = Math.min(labelTop, this.$container.height() - parseInt(this.$xAxisTitle.css('bottom'), 10) - this.$xAxisTitle.height() - this.$horizontalLineLabel.height() - 10);
-  }
-  this.$horizontalLineLabel.css('top', labelTop + 'px');
+  this.updateHorizontalLineHeight(y);
 
   return this;
+};
+
+BarChart.prototype.updateHorizontalLineHeight = function (y) {
+  var self = this;
+
+  if (!this.$horizontalLine) { return; }
+
+  // If line height is given, bind it to the elements
+  if (y) {
+    d3.select(this.barsContainer).selectAll('div.horizontal-line').data([y]);
+    d3.select(this.container).selectAll('div.horizontal-line-label').data([y]);
+  }
+
+  // Animate from current state (can be no line) to new position
+  d3.select(this.barsContainer).selectAll('div.horizontal-line')
+    .transition().duration(this.transitionDuration)
+    .style('top', function (d) { return self._top(d) + 'px'; })
+    ;
+  d3.select(this.container).selectAll('div.horizontal-line-label')
+    .transition().duration(this.transitionDuration)
+    .style('top', function (d) {
+      var labelTop = self._top(d) + parseInt(self.$barsContainer.css('top'), 10) - 10;
+      if (self.$xAxisTitle) {
+        labelTop = Math.min(labelTop, self.$container.height() - parseInt(self.$xAxisTitle.css('bottom'), 10) - self.$xAxisTitle.height() - self.$horizontalLineLabel.height() - 10);
+      }
+      return labelTop + 'px';
+    })
+    ;
 };
 
 // Position functions, with or without the 'px' suffix
@@ -366,8 +387,9 @@ bc.withData([ { datum: 5, _id: "AB 103 XD" }
             , { datum: 7, _id: "GB 103 XD" }
             ])/*.withScale({ minY: 0, maxY: 20 })*/.withYAxisTitle('Distance driven (km)').useVerticalLabels();
 
-//bc.redraw();
-bc.horizontalLine(1.5, 'average');
+bc.redraw();
+bc.horizontalLine(5, 'average');
+
 
 $("#test").on('click', (function () { var count = 0; return function () {
   if (count === 0) {
@@ -395,6 +417,7 @@ $("#test").on('click', (function () { var count = 0; return function () {
                 ]);
 
     bc.redraw();
+bc.horizontalLine(8, 'average');
   }
 
   count += 1;
