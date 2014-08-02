@@ -106,8 +106,6 @@ BarChart.prototype.withXAxisTitle = function (title, width) {
   this.$xAxisTitle.css('right', '0px');
   this.$xAxisTitle.css('bottom', (parseInt(this.$barsContainer.css('bottom'), 10) - 5) + 'px');
 
-  this.$barsContainer.css('right', (this.rightPanelWidth + 15) + 'px');
-
   return this;
 };
 BarChart.prototype.useVerticalLabels = function () {
@@ -235,14 +233,23 @@ BarChart.prototype.redrawYAxis = function () {
 };
 
 BarChart.prototype.updateRightPanelWidth = function (_width) {
-  var width = _width || 150;
+  var width = _width || 150
+    , formerInnerWidth = this.innerWidth;
+    ;
   if (this.rightPanelWidth) { width = Math.max(width, this.rightPanelWidth); }
   if (width > this.$container.width()) { width = this.$container.width() / 4; }
   this.rightPanelWidth = width;
+
+  this.$barsContainer.css('right', (this.rightPanelWidth + 15) + 'px');
+  this.innerWidth = this.$barsContainer.width();
+
+  if (this.innerWidth !== formerInnerWidth) {
+    this.redraw();
+  }
 };
 
 // For now only possible to add one line
-BarChart.prototype.updateHorizontalLine = function (y, text, width) {
+BarChart.prototype.horizontalLine = function (y, text, width) {
   var labelTop;
 
   this.updateRightPanelWidth();
@@ -269,9 +276,12 @@ BarChart.prototype.updateHorizontalLine = function (y, text, width) {
   this.$horizontalLineLabel.css('width', this.rightPanelWidth + 'px');
   this.$horizontalLineLabel.css('right', '0px');
 
-  //var maxTop = this.$container.height()
-
-  this.$horizontalLineLabel.css('top', this._top(y) + 'px');
+  // Prevent horizontal line label from overlapping x axis label
+  var labelTop = this._top(y) + parseInt(this.$barsContainer.css('top'), 10) - 10;
+  if (this.$xAxisTitle) {
+    labelTop = Math.min(labelTop, this.$container.height() - parseInt(this.$xAxisTitle.css('bottom'), 10) - this.$xAxisTitle.height() - this.$horizontalLineLabel.height() - 10);
+  }
+  this.$horizontalLineLabel.css('top', labelTop + 'px');
 
   return this;
 };
@@ -354,9 +364,10 @@ bc.withData([ { datum: 5, _id: "AB 103 XD" }
             , { datum: 1, _id: "EB 103 XD" }
             , { datum: 6, _id: "FB 103 XD" }
             , { datum: 7, _id: "GB 103 XD" }
-            ])/*.withScale({ minY: 0, maxY: 20 })*/.withYAxisTitle('Distance driven (km)').useVerticalLabels().redraw();
+            ])/*.withScale({ minY: 0, maxY: 20 })*/.withYAxisTitle('Distance driven (km)').useVerticalLabels();
 
-bc.updateHorizontalLine(7, 'average');
+//bc.redraw();
+bc.horizontalLine(1.5, 'average');
 
 $("#test").on('click', (function () { var count = 0; return function () {
   if (count === 0) {
