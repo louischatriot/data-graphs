@@ -264,6 +264,7 @@ BarChart.prototype.horizontalLine = function (y, text, width) {
     this.$horizontalLine.css('background-color', 'darkred');
     this.$horizontalLine.css('right', '0px');
     this.$horizontalLine.css('left', '0px');
+    this.$horizontalLine.css('z-index', '2000');   // Must be higher than the bars
   }
   if (!this.$horizontalLineLabel) {
     this.$container.append('<div class="horizontal-line-label">' + text + '</div>');
