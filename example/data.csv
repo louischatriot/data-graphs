@@ -1,4 +1,4 @@
-﻿Plaque d’immatriculation;Nom du véhicule;Code VIN;Distance totale conduite;Distance moyenne conduite par jour;Distance moyenne des trajets;Distance maximum d’un trajet;Distance max conduite en un jour;Nombre de trajets;Nombre de trajets avec réservation;Pourcentage de trajets par réservation;Temps cumulé en trajet;Taux d’utilisation
+﻿licensePlate;vehicleName;vin;totalDistance;averageDistancePerDay;averageRideDistance;maxRideDistance;maxDailyDistance;rides;ridesWithBookings;ridesWithBookingsRate;timeInRide;usageRate
 340AQW51;10 - C3 Bleue 340AQW51;VF7FRKFVC28594905;804,6;36,6;89,4;620,6;620,6;9,0;0,0;0,0;36,5;0,1
 AB306YD;11- C3 Bleue AB306YD;VF7FRKFVC9A098886;1311,4;59,6;655,7;1310,6;55,3;2,0;1,0;0,5;210,5;0,8
 AB294YD;12 - C3 Bleue AB294YD   ;VF7FRKFVC9A098885;0,0;0,0;0,0;0,0;0,0;0,0;0,0;0,0;0,0;0,0
