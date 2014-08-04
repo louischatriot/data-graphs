@@ -409,9 +409,24 @@ function dataChanged() {
               };
 
     // Description depends on the quantity that's graphed
+    // Should be parametrized and templatized
     switch (currentDimension) {
       case 'totalDistance':
-        toPush.description = '<b>' + k + '</b><br>Total: ' + testData[k][currentDimension] + ' kms<br>Average per day: ' + testData[k].averageDistancePerDay + ' kms';
+      case 'averageDistancePerDay':
+        toPush.description = '<b>' + k + '</b><br>Total: ' + testData[k].totalDistance + ' kms<br>Average per day: ' + testData[k].averageDistancePerDay + ' kms';
+        break;
+
+      case 'averageRideDistance':
+        toPush.description = '<b>' + k + '</b><br>Average ride distance: ' + testData[k].averageRideDistance + ' kms';
+        break;
+
+      case 'maxRideDistance':
+        toPush.description = '<b>' + k + '</b><br>Maximum ride distance: ' + testData[k].maxRideDistance + ' kms';
+        break;
+
+      case 'timeInRide':
+      case 'usageRate':
+        toPush.description = '<b>' + k + '</b><br>Total time in use: ' + testData[k].timeInRide + ' hours<br>Usage rate: ' + (testData[k].usageRate * 100) + ' %';
         break;
     }
 
@@ -460,7 +475,7 @@ $('#data-sort').on('click', function () {
 });
 
 // Manage dimensions
-Object.keys(headers).forEach(function (k) {
+["totalDistance", "averageDistancePerDay", "averageRideDistance", "maxRideDistance", "maxDailyDistance", "rides", "ridesWithBookings", "ridesWithBookingsRate", "timeInRide", "usageRate"].forEach(function (k) {
   $('#dimensions').append('<input type="button" class="change-dimension" data-dimension="' + k + '" value="' + headers[k].name + '">');
 });
 var currentDimension = "totalDistance";
