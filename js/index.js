@@ -324,7 +324,7 @@ BarChart.prototype._top = function (y, i) {
 };
 BarChart.prototype._height = function (y, i) {
   // This will work whether y is a number or an object with a datum property
-  return ((y.datum || y) - this.minY) / (this.maxY - this.minY) * this.innerHeight;
+  return ((y.datum !== undefined ? y.datum : y) - this.minY) / (this.maxY - this.minY) * this.innerHeight;
 };
 // Px counterparts
 ['left', 'width', 'top', 'height'].forEach(function (key) {
@@ -426,7 +426,6 @@ function dataChanged() {
     average += d.datum;
   });
   average /= data.length;
-  console.log(average);
 
   bc.withData(data);
   bc.withYAxisTitle(headers[currentDimension].yAxisTitle);
