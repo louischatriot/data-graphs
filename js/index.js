@@ -139,9 +139,11 @@ BarChart.prototype.recalculateSizes = function () {
 
   this.barWidth = barWidth;
   this.spacing = spacing;
+
+  return this;
 };
 
-// Main draxing function that assumes we are in a clean state (same number of bars as data)
+// Main drawing function that assumes we are in a clean state (same number of bars as data)
 // and which leaves a clean state
 BarChart.prototype.redraw = function () {
   var self = this
@@ -171,7 +173,7 @@ BarChart.prototype.redraw = function () {
   // Create new bars
   selection = d3.select(this.barsContainer).selectAll('div.bar').data(this.data, BarChart.statics.getId).enter().append('div')
     .attr('class', 'bar')
-    .style('width', this.barWidth + 'px')
+    .style('width', function (d, i) { return self._width(d, i) + 'px'; })
     .style('top', this.innerHeight + 'px')
     .style('left', function(d, i) { return self._left(d, i) + 'px'; })
     .style('height', '0px')
@@ -197,7 +199,7 @@ BarChart.prototype.redraw = function () {
   // Also put data for tooltip
   d3.select(this.barsContainer).selectAll('div.bar').data(this.data, BarChart.statics.getId)
     .transition().duration(this.transitionDuration).delay(initialDelay)
-    .style('width', this.barWidth + 'px')
+    .style('width', function (d, i) { return self._width(d, i) + 'px'; })
     .style('left', function(d, i) { return self._left(d, i) + 'px'; })
     .attr('data-description', function (d, i) { return d.description || ''; })
     ;
@@ -205,7 +207,7 @@ BarChart.prototype.redraw = function () {
   // Second transition: vertical scaling
   d3.select(this.barsContainer).selectAll('div.bar').data(this.data, BarChart.statics.getId)
     .transition().duration(this.transitionDuration).delay(initialDelay + this.transitionDuration)
-    .style('top', function(d, i) { return (self.innerHeight - self._height(d, i)) + 'px'; })
+    .style('top', function(d, i) { return self._top(d, i) + 'px'; })
     .style('height', function(d, i) { return self._height(d, i) + 'px'; })
     ;
 
