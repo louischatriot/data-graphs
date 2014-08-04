@@ -314,7 +314,7 @@ BarChart.prototype.updateHorizontalLineHeight = function (y) {
     ;
 };
 
-// Position functions, with or without the 'px' suffix
+// Position functions
 BarChart.prototype._left = function (x, i) {
   return this.spacing + (i * (this.spacing + this.barWidth));
 };
@@ -328,10 +328,6 @@ BarChart.prototype._height = function (y, i) {
   // This will work whether y is a number or an object with a datum property
   return ((y.datum !== undefined ? y.datum : y) - this.minY) / (this.maxY - this.minY) * this.innerHeight;
 };
-// Px counterparts
-['left', 'width', 'top', 'height'].forEach(function (key) {
-  BarChart.prototype[key + '_px'] = function (d, i) { return this['_' + key](d, i) + 'px'; };
-});
 
 
 BarChart.statics = {};
@@ -350,8 +346,9 @@ function showToolTip (event) {
   // Not on a bar, only on a label
   if (!$target.hasClass('bar')) { return; }
 
-  if ($target.data('description')) {
-    tooltipHtml = '<div class="tooltip" style="position: fixed; left: ' + (event.pageX - 28) + 'px; top: ' + (event.pageY - 56) + 'px;">' + $target.data('description') + '</div>';
+  // Using $.attr and not $.data since $.data seems to remember the piece of data even when it's unbound, causing tooltips to show for a dimension where we don't want any
+  if ($target.attr('data-description')) {
+    tooltipHtml = '<div class="tooltip" style="position: fixed; left: ' + (event.pageX - 28) + 'px; top: ' + (event.pageY - 60) + 'px;">' + $target.attr('data-description') + '</div>';
     $target.append(tooltipHtml);
   }
 }
@@ -407,7 +404,18 @@ function dataChanged() {
     ;
 
   keys.forEach(function (k) {
-    data.push({ datum: testData[k][currentDimension], _id: k });
+    var toPush = { datum: testData[k][currentDimension]
+              , _id: k
+              };
+
+    // Description depends on the quantity that's graphed
+    switch (currentDimension) {
+      case 'totalDistance':
+        toPush.description = '<b>' + k + '</b><br>Total: ' + testData[k][currentDimension] + ' kms<br>Average per day: ' + testData[k].averageDistancePerDay + ' kms';
+        break;
+    }
+
+    data.push(toPush);
   });
 
   if (currentSort === 'alpha') {
