@@ -36,16 +36,56 @@ function BarChart(opts) {
   this.scale.maxY = opts.maxY;
 
   this.transitionDuration = opts.transitionDuration || 500;
+
+  // Define listeners
+  // We use loosely coupling between data/parameter changes and drawing to keep code simple
+  // The drawback is that certain functions may be called mlore than necessary but their execution time is negligible anyway
+  this.on('change.width', this.resizeContainer);
+  this.on('change.width', this.recalculateSizes);
+
+  this.on('change.height', this.resizeContainer);
+  this.on('change.height', this.recalculateSizes);
+
+  this.on('change.data', this.recalculateSizes);
+
+  this.on('change.rightPanelWidth', this.recalculateSizes);
+  this.on('change.rightPanelWidth', this.redraw);
+
+  this.on('redraw', this.redrawYAxis);
+  this.on('redraw', this.updateHorizontalLineHeight);
 }
+
+// Pubsub
+// Don't use event names starting with '__', they are use internally for listener unbinding
+// One message and one only can be passed, but it can be any object so that's not a restriction
+BarChart.prototype.on = function (evt, action) {
+  if (!this.events) { this.events = {}; }
+  if (!this.events[evt]) {
+    this.events[evt] = [];
+    this.events['__' + evt] = -1;
+  }
+  this.events['__' + evt] += 1;
+  this.events[evt].push({ id: this.events['__' + evt], listener: action });
+
+  return this.events['__' + evt];
+};
+BarChart.prototype.trigger = function (evt, msg) {
+  if (!this.events[evt]) { return; }
+
+  for (var i = 0; i < this.events[evt].length; i += 1) {
+    this.events[evt][i].listener.call(this, msg);
+  }
+};
+
 
 BarChart.prototype.withWidth = function (width) {
   this.width = width;
-  this.resizeContainer();
+  this.trigger('change.width');
   return this;
 };
 BarChart.prototype.withHeight = function (height) {
   this.height = height;
-  this.resizeContainer();
+  this.trigger('change.height');
   return this;
 };
 BarChart.prototype.withData = function (data) {
@@ -64,6 +104,8 @@ BarChart.prototype.withData = function (data) {
 
   if (this.useCustomScale && this.scale.minY !== undefined) { this.minY = this.scale.minY; }
   if (this.useCustomScale && this.scale.maxY !== undefined) { this.maxY = this.scale.maxY; }
+
+  this.trigger('change.data');
 
   return this;
 };
@@ -116,7 +158,6 @@ BarChart.prototype.useVerticalLabels = function () {
 };
 
 BarChart.prototype.resizeContainer = function () {
-  if (!this.$container) { return; }
   if (this.width) { this.$container.css('width', this.width + 'px'); }
   if (this.height) { this.$container.css('height', this.height + 'px'); }
 
@@ -150,8 +191,6 @@ BarChart.prototype.redraw = function () {
     , initialDelay = 0
     , selection
     ;
-
-  this.recalculateSizes();
 
   if (this.showTooltips) {
     $(this.container + ' div.bar').off('mouseover', null, showToolTip);
@@ -211,13 +250,12 @@ BarChart.prototype.redraw = function () {
     .style('height', function(d, i) { return self._height(d, i) + 'px'; })
     ;
 
-  this.redrawYAxis();
-  this.updateHorizontalLineHeight();
-
   if (this.showTooltips) {
     $(this.container + ' div.bar').on('mouseover', showToolTip);
     $(this.container + ' div.bar').on('mouseleave', removeToolTip);
   }
+
+  this.trigger('redraw');
 };
 
 BarChart.prototype.redrawYAxis = function () {
@@ -242,23 +280,21 @@ BarChart.prototype.updateRightPanelWidth = function (_width) {
   var width = _width || 150
     , formerInnerWidth = this.innerWidth;
     ;
+
   if (this.rightPanelWidth) { width = Math.max(width, this.rightPanelWidth); }
-  if (width > this.$container.width()) { width = this.$container.width() / 4; }
+  if (width > this.$container.width() > 4) { width = this.$container.width() / 4; }
   this.rightPanelWidth = width;
 
   this.$barsContainer.css('right', (this.rightPanelWidth + 15) + 'px');
-  this.innerWidth = this.$barsContainer.width();
 
-  if (this.innerWidth !== formerInnerWidth) {
-    this.redraw();
-  }
+  this.trigger('change.rightPanelWidth');
 };
 
 // For now only possible to add one line
 BarChart.prototype.horizontalLine = function (y, text, width) {
   var self = this;
 
-  this.updateRightPanelWidth();
+  this.updateRightPanelWidth(width);
 
   // Create the line and its label
   if (!this.$horizontalLine) {
@@ -496,7 +532,7 @@ var bc = new BarChart({ container: "#graph1"
 , displayLabels: true
 , showTooltips: true
 });
-bc.resizeContainer().withScale({ minY: 0 });
+bc.withWidth(1200).withScale({ minY: 0 });
 
 
 dataChanged();
