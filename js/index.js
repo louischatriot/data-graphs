@@ -1,6 +1,5 @@
 /**
  * Animated bar chart
- *  * data: object x: y where x is a label and y a numerical value
  */
 function BarChart(opts) {
   var self = this;
@@ -104,6 +103,7 @@ BarChart.prototype.withData = function (data) {
 
   if (this.useCustomScale && this.scale.minY !== undefined) { this.minY = this.scale.minY; }
   if (this.useCustomScale && this.scale.maxY !== undefined) { this.maxY = this.scale.maxY; }
+  if (this.maxY === this.minY) { this.maxY = this.minY + 1; }
 
   this.trigger('change.data');
 
@@ -114,6 +114,7 @@ BarChart.prototype.withScale = function (scale) {
 
   if (this.useCustomScale && this.scale.minY !== undefined) { this.minY = this.scale.minY; }
   if (this.useCustomScale && this.scale.maxY !== undefined) { this.maxY = this.scale.maxY; }
+  if (this.maxY === this.minY) { this.maxY = this.minY + 1; }
 
   return this;
 };
@@ -328,7 +329,7 @@ BarChart.prototype.updateHorizontalLineHeight = function (y) {
   if (!this.$horizontalLine) { return; }
 
   // If line height is given, bind it to the elements
-  if (y) {
+  if (y !== undefined) {
     d3.select(this.barsContainer).selectAll('div.horizontal-line').data([y]);
     d3.select(this.container).selectAll('div.horizontal-line-label').data([y]);
   }
@@ -433,99 +434,118 @@ var headers = {
 
 
 
-function dataChanged() {
-  var data = []
-    , keys = Object.keys(testData)
-    , average = 0
-    ;
+//function dataChanged() {
+  //var data = []
+    //, keys = Object.keys(testData)
+    //, average = 0
+    //;
 
-  keys.forEach(function (k) {
-    var toPush = { datum: testData[k][currentDimension]
-              , _id: k
-              };
+  //keys.forEach(function (k) {
+    //var toPush = { datum: testData[k][currentDimension]
+              //, _id: k
+              //};
 
-    // Description depends on the quantity that's graphed
-    // Should be parametrized and templatized
-    switch (currentDimension) {
-      case 'totalDistance':
-      case 'averageDistancePerDay':
-        toPush.description = '<b>' + k + '</b><br>Total: ' + testData[k].totalDistance + ' kms<br>Average per day: ' + testData[k].averageDistancePerDay + ' kms';
-        break;
+    //// Description depends on the quantity that's graphed
+    //// Should be parametrized and templatized
+    //switch (currentDimension) {
+      //case 'totalDistance':
+      //case 'averageDistancePerDay':
+        //toPush.description = '<b>' + k + '</b><br>Total: ' + testData[k].totalDistance + ' kms<br>Average per day: ' + testData[k].averageDistancePerDay + ' kms';
+        //break;
 
-      case 'averageRideDistance':
-        toPush.description = '<b>' + k + '</b><br>Average ride distance: ' + testData[k].averageRideDistance + ' kms';
-        break;
+      //case 'averageRideDistance':
+        //toPush.description = '<b>' + k + '</b><br>Average ride distance: ' + testData[k].averageRideDistance + ' kms';
+        //break;
 
-      case 'maxRideDistance':
-        toPush.description = '<b>' + k + '</b><br>Maximum ride distance: ' + testData[k].maxRideDistance + ' kms';
-        break;
+      //case 'maxRideDistance':
+        //toPush.description = '<b>' + k + '</b><br>Maximum ride distance: ' + testData[k].maxRideDistance + ' kms';
+        //break;
 
-      case 'timeInRide':
-      case 'usageRate':
-        toPush.description = '<b>' + k + '</b><br>Total time in use: ' + testData[k].timeInRide + ' hours<br>Usage rate: ' + (testData[k].usageRate * 100) + ' %';
-        break;
-    }
+      //case 'timeInRide':
+      //case 'usageRate':
+        //toPush.description = '<b>' + k + '</b><br>Total time in use: ' + testData[k].timeInRide + ' hours<br>Usage rate: ' + (testData[k].usageRate * 100) + ' %';
+        //break;
+    //}
 
-    data.push(toPush);
-  });
+    //data.push(toPush);
+  //});
 
-  if (currentSort === 'alpha') {
-    data.sort(function (a, b) {
-      if (a._id > b._id) {
-        return 1;
-      } else {
-        return -1;
-      }
-    });
-  } else {
-    data.sort(function(a, b) {
-      return b.datum - a.datum;
-    });
-  }
+  //if (currentSort === 'alpha') {
+    //data.sort(function (a, b) {
+      //if (a._id > b._id) {
+        //return 1;
+      //} else {
+        //return -1;
+      //}
+    //});
+  //} else {
+    //data.sort(function(a, b) {
+      //return b.datum - a.datum;
+    //});
+  //}
 
-  data.forEach(function (d) {
-    average += d.datum;
-  });
-  average /= data.length;
+  //data.forEach(function (d) {
+    //average += d.datum;
+  //});
+  //average /= data.length;
 
-  bc.withData(data);
-  bc.withYAxisTitle(headers[currentDimension].yAxisTitle);
-  bc.horizontalLine(average, 'Average: ' + average);
-  bc.redraw();
-}
-
-
-
-// Manage sort
-var currentSort = 'alpha';
-$('#data-sort').on('click', function () {
-  if (currentSort === 'alpha') {
-    currentSort = 'lts';
-    $('#data-sort').attr('value', 'Alphabetically');
-  } else {
-    currentSort = 'alpha';
-    $('#data-sort').attr('value', 'Largest to lowest');
-  }
-
-  dataChanged();
-});
-
-// Manage dimensions
-["totalDistance", "averageDistancePerDay", "averageRideDistance", "maxRideDistance", "maxDailyDistance", "rides", "ridesWithBookings", "ridesWithBookingsRate", "timeInRide", "usageRate"].forEach(function (k) {
-  $('#dimensions').append('<input type="button" class="change-dimension" data-dimension="' + k + '" value="' + headers[k].name + '">');
-});
-var currentDimension = "totalDistance";
-$('.change-dimension').on('click', function (event) {
-  var $target = $(event.target);
-
-  currentDimension = $target.data('dimension');
-
-  dataChanged();
-});
+  //bc.withData(data);
+  //bc.withYAxisTitle(headers[currentDimension].yAxisTitle);
+  //bc.horizontalLine(average, 'Average: ' + d3.round(average, 1));
+  //bc.redraw();
+//}
 
 
 
-// Init
+//// Manage sort
+//var currentSort = 'alpha';
+//$('#data-sort').on('click', function () {
+  //if (currentSort === 'alpha') {
+    //currentSort = 'lts';
+    //$('#data-sort').attr('value', 'Alphabetically');
+  //} else {
+    //currentSort = 'alpha';
+    //$('#data-sort').attr('value', 'Largest to lowest');
+  //}
+
+  //dataChanged();
+//});
+
+//// Manage dimensions
+//["totalDistance", "averageDistancePerDay", "averageRideDistance", "maxRideDistance", "maxDailyDistance", "rides", "ridesWithBookings", "ridesWithBookingsRate", "timeInRide", "usageRate"].forEach(function (k) {
+  //$('#dimensions').append('<input type="button" class="change-dimension" data-dimension="' + k + '" value="' + headers[k].name + '">');
+//});
+//var currentDimension = "totalDistance";
+//$('.change-dimension').on('click', function (event) {
+  //var $target = $(event.target);
+
+  //currentDimension = $target.data('dimension');
+
+  //dataChanged();
+//});
+
+
+
+//// Init
+//var bc = new BarChart({ container: "#graph1"
+//, useCustomScale: true
+////, maxBarWidth: 20
+//, displayLabels: true
+//, showTooltips: true
+//});
+//bc.withWidth(1200).withScale({ minY: 0 });
+
+
+//dataChanged();
+
+
+
+
+
+
+
+
+
 var bc = new BarChart({ container: "#graph1"
 , useCustomScale: true
 //, maxBarWidth: 20
@@ -535,55 +555,50 @@ var bc = new BarChart({ container: "#graph1"
 bc.withWidth(1200).withScale({ minY: 0 });
 
 
-dataChanged();
+bc.withData([ { datum: 0, _id: "AB 103 XD" }
+            , { datum: 0, _id: "BB 103 XD" }
+            , { datum: 0, _id: "CB 103 XD", description: "Some interesting text" }      
+            , { datum: 0, _id: "DB 103 XD", description: "Some other text" }
+            , { datum: 0, _id: "EB 103 XD" }
+            , { datum: 0, _id: "FB 103 XD" }
+            , { datum: 0, _id: "GB 103 XD" }
+            ])/*.withScale({ minY: 0, maxY: 20 })*/.withYAxisTitle('Distance driven (km)').useVerticalLabels();
+
+bc.redraw();
+bc.horizontalLine(0, 'average');
 
 
+$("#test").on('click', (function () { var count = 0; return function () {
+  if (count === 0) {
+    bc.withData([ { datum: 4, _id: "HB 103 XD" }
+                , { datum: 2, _id: "DB 103 XD" }
+                , { datum: 17, _id: "CB 103 XD" }
+                , { datum: 16, _id: "IB 103 XD" }
+                , { datum: 0, _id: "EB 103 XD" }
+                , { datum: 5, _id: "FB 103 XD" }
+                , { datum: 10, _id: "BB 103 XD" }
+                , { datum: 12, _id: "GB 103 XD" }
+                , { datum: 18, _id: "AB 103 XD" }
+                ]);
 
+    bc.redraw();
+  }
 
-//bc.withData([ { datum: 5, _id: "AB 103 XD" }
-            //, { datum: 12, _id: "BB 103 XD" }
-            //, { datum: 4, _id: "CB 103 XD", description: "Some interesting text" }      
-            //, { datum: 7, _id: "DB 103 XD", description: "Some other text" }
-            //, { datum: 1, _id: "EB 103 XD" }
-            //, { datum: 6, _id: "FB 103 XD" }
-            //, { datum: 7, _id: "GB 103 XD" }
-            //])[>.withScale({ minY: 0, maxY: 20 })<].withYAxisTitle('Distance driven (km)').useVerticalLabels();
+  if (count === 1) {
+    bc.withData([ { datum: 4, _id: "BB 103 XD" }
+                , { datum: 2, _id: "DB 103 XD" }
+                , { datum: 16, _id: "IB 103 XD" }
+                , { datum: 0, _id: "EB 103 XD" }
+                , { datum: 10, _id: "HB 103 XD" }
+                , { datum: 18, _id: "AB 103 XD" }
+                ]);
 
-//bc.redraw();
-//bc.horizontalLine(5, 'average');
+    bc.redraw();
+bc.horizontalLine(8, 'average');
+  }
 
-
-//$("#test").on('click', (function () { var count = 0; return function () {
-  //if (count === 0) {
-    //bc.withData([ { datum: 4, _id: "HB 103 XD" }
-                //, { datum: 2, _id: "DB 103 XD" }
-                //, { datum: 17, _id: "CB 103 XD" }
-                //, { datum: 16, _id: "IB 103 XD" }
-                //, { datum: 0, _id: "EB 103 XD" }
-                //, { datum: 5, _id: "FB 103 XD" }
-                //, { datum: 10, _id: "BB 103 XD" }
-                //, { datum: 12, _id: "GB 103 XD" }
-                //, { datum: 18, _id: "AB 103 XD" }
-                //]);
-
-    //bc.redraw();
-  //}
-
-  //if (count === 1) {
-    //bc.withData([ { datum: 4, _id: "BB 103 XD" }
-                //, { datum: 2, _id: "DB 103 XD" }
-                //, { datum: 16, _id: "IB 103 XD" }
-                //, { datum: 0, _id: "EB 103 XD" }
-                //, { datum: 10, _id: "HB 103 XD" }
-                //, { datum: 18, _id: "AB 103 XD" }
-                //]);
-
-    //bc.redraw();
-//bc.horizontalLine(8, 'average');
-  //}
-
-  //count += 1;
-//}})());
+  count += 1;
+}})());
 
 
 
